@@ -1,0 +1,92 @@
+[workspace]
+
+members = ["crates/huub", "crates/huub-cli"]
+
+resolver = "2"
+
+[workspace.package]
+repository = "https://github.com/huub-solver/huub"
+version = "0.1.0"
+authors = ["Jip J. Dekker <jip@dekker.one>"]
+edition = "2024"
+license = "MPL-2.0"
+homepage = "https://huub.solutions"
+categories = ["algorithms", "mathematics", "science"]
+keywords = ["sat", "lcg", "flatzinc", "minizinc", "optimization"]
+
+[workspace.dependencies]
+bon = "3.8.2"
+ctrlc = "3.4"
+divan = { package = "codspeed-divan-compat", version = "4.0" }
+dyn-clone = "1.0.20"
+expect-test = "1.5"
+flatzinc-serde = "0.4.4"
+humantime = "2.1.0"
+index_vec = "0.1.3"
+itertools = "0.14.0"
+mimalloc = "0.1.47"
+pico-args = { version = "0.5.0", features = ["combined-flags"] }
+pindakaas = { version = "0.2.3", features = ["external-propagation"] }
+rangelist = "0.4.0"
+rustc-hash = "2.1.1"
+serde = "1.0"
+serde_json = "1.0"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+tracing-test = "0.2.5"
+
+[workspace.lints.rust]
+missing_debug_implementations = "warn"
+missing_docs = "warn"
+non_ascii_idents = "deny"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unit_bindings = "warn"
+# unnameable_types = "warn"
+unreachable_pub = "warn"
+unused_crate_dependencies = "deny"
+unused_import_braces = "warn"
+unused_lifetimes = "warn"
+unused_macro_rules = "warn"
+unused_qualifications = "warn"
+variant_size_differences = "warn"
+
+[workspace.lints.clippy]
+allow_attributes_without_reason = "deny"
+# cargo_common_metadata = "warn"
+clone_on_ref_ptr = "warn"
+default_union_representation = "deny"
+implicit_clone = "warn"
+missing_docs_in_private_items = "warn"
+mixed_read_write_in_expression = "deny"
+# multiple_crate_versions = "warn"
+negative_feature_names = "deny"
+rc_buffer = "warn"
+rc_mutex = "warn"
+redundant_feature_names = "warn"
+redundant_type_annotations = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+# same_name_method = "warn"
+semicolon_if_nothing_returned = "warn"
+str_to_string = "warn"
+string_add = "warn"
+string_add_assign = "warn"
+string_lit_chars_any = "warn"
+tests_outside_test_module = "warn"
+try_err = "warn"
+undocumented_unsafe_blocks = "warn"
+unnecessary_safety_comment = "warn"
+unseparated_literal_suffix = "warn"
+unnecessary_safety_doc = "warn"
+wildcard_dependencies = "warn"
+wrong_self_convention = "warn"
+
+[profile.bench]
+inherits = "release"
+debug = true
+strip = "none"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
