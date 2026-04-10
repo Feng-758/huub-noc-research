@@ -1,0 +1,1 @@
+output let {array [int] of string: X_INTRODUCED_57_ = ["=====SATISFIABLE===== \n"]} in (["\"output\": {","\"default\": ",showJSON(concat(X_INTRODUCED_57_)),", \"raw\": ",showJSON(concat(X_INTRODUCED_57_)),"}, \"sections\": [\"default\", \"raw\"]"]);

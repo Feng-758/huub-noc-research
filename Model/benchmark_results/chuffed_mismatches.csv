@@ -1,0 +1,3 @@
+batch,size_label,density_label,density_display_label,density_ratio_low,density_ratio_high,ns,ps,d1,d2,repeat_count,instance,chuffed_status,chuffed_time_sec,noc_status,noc_time_sec,noc_returncode,noc_int_status,noc_int_time_sec,noc_int_returncode,noc_correct,noc_int_correct,same_status,speedup_noc_over_noc_int
+0,n20,very_sparse,"very_sparse[2,2]",0.02,0.05,20,10,2,2,20,batch0_test_0005.dzn,SAT,0.004498875001445413,UNSAT,0.08162452500255313,0,SAT,0.08245942506182473,0,False,True,False,0.9898750196397121
+3,n20,dense,"dense[6,8]",0.3,0.45,20,10,6,8,20,batch3_test_0000.dzn,SAT,0.22765045799314976,UNSAT,0.08582176859490573,0,SAT,0.14221396879293025,0,False,True,False,0.6034693309197071

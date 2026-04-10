@@ -1,0 +1,6 @@
+batch,size_label,density_label,density_display_label,density_ratio_low,density_ratio_high,ns,ps,d1,d2,repeat_count,instance,chuffed_status,chuffed_time_sec,noc_status,noc_time_sec,noc_returncode,noc_int_status,noc_int_time_sec,noc_int_returncode,noc_correct,noc_int_correct,same_status,speedup_noc_over_noc_int
+6,n50,very_sparse,"very_sparse[2,2]",0.02,0.05,50,25,2,2,1,batch6_test_0267.dzn,UNSAT,0.008713416988030076,ERROR,0.1114409999572672,1,UNSAT,0.11148183402838185,0,,True,False,0.9996337154705917
+7,n50,sparse,"sparse[3,5]",0.06,0.12,50,25,3,5,1,batch7_test_0095.dzn,SAT,0.008675041957758367,TIMEOUT,180.0042109169881,-999,SAT,2.5514166250359267,0,,True,False,70.55069295648782
+12,n100,very_sparse,"very_sparse[2,4]",0.02,0.05,100,50,2,4,1,batch12_test_0005.dzn,SAT,1.059887500014156,TIMEOUT,180.00489983294392,-999,SAT,1.948463000007905,0,,True,False,92.38302181371348
+12,n100,very_sparse,"very_sparse[2,4]",0.02,0.05,100,50,2,4,1,batch12_test_0074.dzn,SAT,0.007670291990507394,TIMEOUT,180.00429554202128,-999,SAT,22.442558250040747,0,,True,False,8.020667409505084
+12,n100,very_sparse,"very_sparse[2,4]",0.02,0.05,100,50,2,4,1,batch12_test_0271.dzn,SAT,0.009264749998692423,SAT,54.85834604204865,0,TIMEOUT,180.00615933397785,-999,True,,False,0.30475816074863404

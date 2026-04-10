@@ -1,0 +1,24 @@
+{
+    "openFiles": [
+        "Playground.mzn",
+        "test0.dzn",
+        "test1.dzn",
+        "test2.dzn",
+        "test3.dzn",
+        "test4.dzn",
+        "test5.dzn"
+    ],
+    "openTab": 6,
+    "projectFiles": [
+        "Playground.mzn",
+        "test0.dzn",
+        "test1.dzn",
+        "test2.dzn",
+        "test3.dzn",
+        "test4.dzn",
+        "test5.dzn"
+    ],
+    "selectedBuiltinConfigId": "solutions.huub",
+    "selectedBuiltinConfigVersion": "0.1.0",
+    "version": 106
+}

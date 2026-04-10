@@ -1,0 +1,17 @@
+instance,status,time_sec,group
+ABP(BW)_Onebit_(datasize=2_capacity=1_windowsize=1)eq=branching-sim.dzn,TIMEOUT,180.11090650002006,equivchecking
+"steadygame(10000,_1,_20,_1,_20)id=23.dzn",TIMEOUT,180.08560650004074,pgsolver
+ABP(BW)_Onebit_(datasize=2_capacity=1_windowsize=1)eq=branching-bisim.dzn,TIMEOUT,180.07092475000536,equivchecking
+SWPdatasize=2_windowsize=4_read_then_eventually_send.dzn,TIMEOUT,180.0618266670499,modelchecking
+SWPdatasize=2_windowsize=2_read_then_eventually_send_if_fair.dzn,SAT,159.1336280410178,modelchecking
+Lift_(Correct)nlifts=4_safety_2_1.dzn,SAT,138.67305333307013,modelchecking
+Lift_(Correct)nlifts=4_safety_2_2.dzn,SAT,138.6345760410186,modelchecking
+Lift_(Incorrect)nlifts=3_nodeadlock.dzn,UNSAT,134.3974041660549,modelchecking
+SWPdatasize=8_windowsize=1_no_generation_of_messages.dzn,SAT,128.4003872089088,modelchecking
+CABPdatasize=8_infinitely_often_receive_for_all_d.dzn,UNSAT,121.6222118330188,modelchecking
+ABP(BW)_ABP(BW)_(datasize=4_capacity=1_windowsize=1)eq=branching-bisim.dzn,SAT,120.64939249999588,equivchecking
+ABP(BW)_ABP(BW)_(datasize=4_capacity=1_windowsize=1)eq=branching-sim.dzn,SAT,118.1091002500034,equivchecking
+Pardatasize=8_no_generation_of_messages.dzn,SAT,1.0666302083215369,modelchecking
+Domineeringwidth=4_height=4_player2_has_winning_strategy.dzn,UNSAT,1.0126044026498373,modelchecking
+Buffer_SWP_(datasize=2_capacity=1_windowsize=1)eq=branching-bisim.dzn,UNSAT,1.004987333668396,equivchecking
+Buffer_SWP_(datasize=2_capacity=1_windowsize=1)eq=branching-sim.dzn,UNSAT,0.9692835690026792,equivchecking
