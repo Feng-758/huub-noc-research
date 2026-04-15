@@ -96,6 +96,46 @@ impl<B> NoOpponentCycle<B> {
 	}
 
 	// ---------------------------------
+	// Pre-cut for self-cycle lose loop.
+	// ---------------------------------
+	fn simplify_forbidden_self_loops<E: ReasoningEngine>(
+		&mut self,
+		ctx: &mut E::PropagationCtx<'_>,
+	) -> Result<(), <E as ReasoningEngine>::Conflict>
+	where
+		B: BoolSolverActions<E>,
+	{
+		let m = self.game.num_edges();
+
+		for e in 0..m {
+			let s = self.game.source(e);
+			let t = self.game.target(e);
+
+			if s != t {
+				continue;
+			}
+
+			if !self.cycle_is_forbidden_by_parity(&[e]) {
+				continue;
+			}
+
+			match self.edges[e].val(ctx) {
+				Some(true) => {
+					return Err(ctx.declare_conflict(vec![self.edges[e].clone().into()]));
+				}
+				Some(false) => {
+					// already removed
+				}
+				None => {
+					self.edges[e].fix(ctx, false, vec![])?;
+				}
+			}
+		}
+
+		Ok(())
+	}
+
+	// ---------------------------------
 	// NOCEager DFS
 	// ---------------------------------
 	fn noceager_dfs<E: ReasoningEngine>(
@@ -123,24 +163,6 @@ impl<B> NoOpponentCycle<B> {
 			cycle_edges.push(incoming_e);
 
 			if self.cycle_is_forbidden_by_parity(&cycle_edges) {
-				// to do in simply
-				if cycle_edges.len() == 1 {
-					match self.edges[incoming_e].val(ctx) {
-						Some(true) => {
-							// A self-loop that is already selected is a real conflict.
-							return Err(ctx.declare_conflict(vec![self.edges[incoming_e].clone().into()]));
-						}
-						Some(false) => {
-							return Ok(());
-						}
-						None => {
-							// The self-loop is not selected yet, so do not raise conflict early.
-							// Leave it unassigned for now rather than over-pruning the branch.
-							return Ok(());
-						}
-					}
-				}
-
 				// For 2-cycles and longer cycles, keep the propagation-style interface:
 				// use already-true stack/context edges as antecedents, but never include
 				// the propagated edge itself.
@@ -189,7 +211,10 @@ where
 		&mut self,
 		ctx: &mut E::PropagationCtx<'_>,
 	) -> Result<SimplificationStatus, <E as ReasoningEngine>::Conflict> {
-		// cut self-odd_cycles
+		// First remove forbidden self-loops directly.
+		self.simplify_forbidden_self_loops(ctx)?;
+
+		// Then run the normal cycle propagation for longer cycles.
 		self.propagate(ctx)?;
 		Ok(SimplificationStatus::NoFixpoint)
 	}
