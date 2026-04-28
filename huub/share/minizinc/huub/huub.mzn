@@ -10,3 +10,5 @@ annotation not_last;
 
 /** @group huub.annotations When used on a disjunctive constraint, Huub uses the detectable precedence propagation algorithm for the constraint. */
 annotation detectable_precedence;
+
+annotation custom_search(array[int] of var int: x);

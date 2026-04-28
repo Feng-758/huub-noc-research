@@ -249,6 +249,23 @@ where
 					})
 				}
 			}
+			"custom_search" => {
+				if let [vars] = c.args.as_slice() {
+					let vars = self
+						.ann_arg_var_array(vars)?
+						.iter()
+						.map(|l| self.lit_int(l))
+						.try_collect()?;
+
+					Ok((Vec::new(), vec![Branching::CustomSearch(vars)]))
+				} else {
+					Err(FlatZincError::InvalidNumArgs {
+						name: "custom_search",
+						found: c.args.len(),
+						expected: 1,
+					})
+				}
+			}
 			"int_search" => {
 				if let [vars, var_sel, val_sel, _] = c.args.as_slice() {
 					let vars = self
