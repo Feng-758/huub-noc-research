@@ -12,7 +12,8 @@ use crate::{
 	solver::{
 		Solver,
 		branchers::{
-			BoolBrancher, IntBrancher, ValueSelection, VariableSelection, WarmStartBrancher,
+			BoolBrancher, CustomSearchBrancher, IntBrancher, ValueSelection, VariableSelection,
+			WarmStartBrancher,
 		},
 	},
 };
@@ -47,6 +48,7 @@ pub enum Branching {
 	/// Search by enforcing the given Boolean expressions, but abandon the
 	/// search when finding a conflict.
 	WarmStart(Vec<View<bool>>),
+	CustomSearch(Vec<View<IntVal>>),
 }
 
 impl From<View<IntVal>> for AnyView {
@@ -82,6 +84,10 @@ impl Branching {
 			Branching::WarmStart(exprs) => {
 				let decisions = exprs.iter().map(|v| map.get(slv, *v)).collect();
 				WarmStartBrancher::new_in(slv, decisions);
+			}
+			Branching::CustomSearch(v) => {
+				let vars: Vec<_> = v.iter().map(|v| map.get(slv, *v)).collect();
+				CustomSearchBrancher::new_in(slv, vars);
 			}
 		}
 	}
