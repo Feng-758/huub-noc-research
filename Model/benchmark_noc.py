@@ -12,7 +12,7 @@ from pathlib import Path
 # =========================
 # Paths
 # =========================
-BASE_DIR = Path.home() / "monash/Research/Codes/practice/huub-noc/Model"
+BASE_DIR = Path.home() / "/Users/clarence/monash/Research/Codes/huub_noc_research/Model"
 NOC_MODEL = BASE_DIR / "noc_practice.mzn"
 NOC_INT_MODEL = BASE_DIR / "noc_int_practice.mzn"
 TEST_DIR = BASE_DIR / "generated_tests"

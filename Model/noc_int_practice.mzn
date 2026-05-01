@@ -1,3 +1,4 @@
+include "huub.mzn";
 % Use this editor as a MiniZinc scratch book
 int: nvertices;
 int: nedges;
@@ -77,6 +78,7 @@ array[EDGES] of int: targets0 = [ targets[e] - 1 | e in EDGES ];
 % Call your custom constraint (FlatZinc name must match your flatzinc.rs)
 constraint noc_int(V, owners, priors, sources0, targets0, weights, init0, reward);
 
-solve satisfy;
+% solve satisfy;
+solve :: custom_search(V) satisfy;
 
 output ["=====SATISFIABLE===== \n"]; 

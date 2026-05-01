@@ -87,16 +87,20 @@ pub struct Engine {
 pub(crate) struct EngineStatistics {
 	/// Number of conflicts encountered
 	pub(crate) conflicts: u64,
-	/// Number of search decisions left to the SAT solver
-	pub(crate) sat_decisions: u64,
+	/// Number of search directives left to the SAT solver
+	pub(crate) sat_search_directives: u64,
 	/// Peak search depth
 	pub(crate) peak_depth: u32,
 	/// Number of times a CP propagator was called
 	pub(crate) propagations: u64,
-	/// Number of backtracks to level 0
+	/// Number of restarts signalled by the SAT solver
 	pub(crate) restarts: u32,
-	/// Number of decisions following the user-specified search heuristics
-	pub(crate) user_decisions: u64,
+	/// Number of search directives following the user-specified search heuristics
+	pub(crate) user_search_directives: u64,
+	/// Number of eagerly created SAT literals to represent decision variables
+	pub(crate) eager_literals: u64,
+	/// Number of lazily created SAT literals to represent decision variables
+	pub(crate) lazy_literals: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -488,7 +492,7 @@ impl PropagatorExtension for Engine {
 			// immediately if all branchers have been exhausted.
 			let mut current = self.state.trail.trailed(Trail::CURRENT_BRANCHER);
 			if current == self.branchers.len() {
-				self.state.statistics.sat_decisions += 1;
+				self.state.statistics.sat_search_directives += 1;
 				return SearchDecision::Free;
 			}
 
@@ -506,7 +510,7 @@ impl PropagatorExtension for Engine {
 						);
 						// The current brancher has selected a literal, return it as our decision
 						debug!(lit = i32::from(lit.0), "decide");
-						self.state.statistics.user_decisions += 1;
+						self.state.statistics.user_search_directives += 1;
 						return SearchDecision::Assign(lit.0);
 					}
 					Directive::Exhausted => {
@@ -526,7 +530,7 @@ impl PropagatorExtension for Engine {
 				}
 			}
 		}
-		self.state.statistics.sat_decisions += 1;
+		self.state.statistics.sat_search_directives += 1;
 		SearchDecision::Free
 	}
 

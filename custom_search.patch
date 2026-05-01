@@ -1,0 +1,145 @@
+diff --git a/crates/huub/src/model/deserialize.rs b/crates/huub/src/model/deserialize.rs
+index cc9362d..7234da6 100644
+--- a/crates/huub/src/model/deserialize.rs
++++ b/crates/huub/src/model/deserialize.rs
+@@ -12,7 +12,8 @@ use crate::{
+ 	solver::{
+ 		Solver,
+ 		branchers::{
+-			BoolBrancher, IntBrancher, ValueSelection, VariableSelection, WarmStartBrancher,
++			BoolBrancher, CustomSearchBrancher, IntBrancher, ValueSelection, VariableSelection,
++			WarmStartBrancher,
+ 		},
+ 	},
+ };
+@@ -47,6 +48,7 @@ pub enum Branching {
+ 	/// Search by enforcing the given Boolean expressions, but abandon the
+ 	/// search when finding a conflict.
+ 	WarmStart(Vec<View<bool>>),
++	CustomSearch(Vec<View<IntVal>>),
+ }
+ 
+ impl From<View<IntVal>> for AnyView {
+@@ -83,6 +85,10 @@ impl Branching {
+ 				let decisions = exprs.iter().map(|v| map.get(slv, *v)).collect();
+ 				WarmStartBrancher::new_in(slv, decisions);
+ 			}
++			Branching::CustomSearch(v) => {
++				let vars: Vec<_> = v.iter().map(|v| map.get(slv, *v)).collect();
++				CustomSearchBrancher::new_in(slv, vars);
++			}
+ 		}
+ 	}
+ }
+diff --git a/crates/huub/src/model/deserialize/flatzinc.rs b/crates/huub/src/model/deserialize/flatzinc.rs
+index fb4f6b2..15ab066 100644
+--- a/crates/huub/src/model/deserialize/flatzinc.rs
++++ b/crates/huub/src/model/deserialize/flatzinc.rs
+@@ -244,6 +244,23 @@ where
+ 					})
+ 				}
+ 			}
++			"custom_search" => {
++				if let [vars] = c.args.as_slice() {
++					let vars = self
++						.ann_arg_var_array(vars)?
++						.iter()
++						.map(|l| self.lit_int(l))
++						.try_collect()?;
++
++					Ok((Vec::new(), vec![Branching::CustomSearch(vars)]))
++				} else {
++					Err(FlatZincError::InvalidNumArgs {
++						name: "custom_search",
++						found: c.args.len(),
++						expected: 1,
++					})
++				}
++			}
+ 			"int_search" => {
+ 				if let [vars, var_sel, val_sel, _] = c.args.as_slice() {
+ 					let vars = self
+diff --git a/crates/huub/src/solver/branchers.rs b/crates/huub/src/solver/branchers.rs
+index df8620e..3907b29 100644
+--- a/crates/huub/src/solver/branchers.rs
++++ b/crates/huub/src/solver/branchers.rs
+@@ -361,3 +361,57 @@ where
+ 		Directive::Consumed
+ 	}
+ }
++
++#[derive(Clone, Debug)]
++pub(crate) struct CustomSearchBrancher {
++	vars: Vec<View<IntVal>>,
++	/// The start of the unfixed variables in `vars`.
++	next: Trailed<usize>,
++}
++
++impl CustomSearchBrancher {
++	/// Create a new [`CustomSearchBrancher`] brancher and add to the end of the
++	/// branching queue in the solver.
++	pub fn new_in(solver: &mut impl BrancherInitActions, vars: Vec<View<IntVal>>) {
++		let vars: Vec<_> = vars
++			.into_iter()
++			.filter(|i| !matches!(i.0, IntView::Const(_)))
++			.collect();
++
++		for &v in &vars {
++			solver.ensure_decidable(v);
++		}
++
++		let next = solver.new_trailed(0);
++		solver.push_brancher(Box::new(CustomSearchBrancher { vars, next }));
++	}
++}
++
++impl<D> Brancher<D> for CustomSearchBrancher
++where
++	D: DecisionActions + ReasoningContext<Atom = View<bool>>,
++	View<IntVal>: IntDecisionActions<D>,
++{
++	fn decide(&mut self, ctx: &mut D) -> Directive {
++		let next = ctx.trailed(self.next);
++		let mut unfixed = None;
++		for i in next..self.vars.len() {
++			let v = &self.vars[i];
++			let (lb, ub) = v.bounds(ctx);
++			if lb != ub {
++				if lb > 0 {
++					return Directive::Select(v.lit(ctx, IntLitMeaning::Less(lb + 1)));
++				}
++				if unfixed.is_none() {
++					ctx.set_trailed(self.next, i);
++					unfixed = Some(v);
++				}
++			}
++		}
++		if let Some(v) = unfixed {
++			debug_assert!(v.min(ctx) <= 0);
++			return Directive::Select(v.lit(ctx, IntLitMeaning::GreaterEq(1)));
++		}
++		Directive::Exhausted
++	}
++}
+diff --git a/search_test.mzn b/search_test.mzn
+new file mode 100644
+index 0000000..2a5c7b2
+--- /dev/null
++++ b/search_test.mzn
+@@ -0,0 +1,6 @@
++include "huub.mzn";
++
++array[1..3] of var 0..2: x;
++
++% ::int_search(x, input_order, indomain_max)
++solve ::custom_search(x) satisfy;
+diff --git a/share/minizinc/huub/huub.mzn b/share/minizinc/huub/huub.mzn
+index 3c20fd6..6694c41 100644
+--- a/share/minizinc/huub/huub.mzn
++++ b/share/minizinc/huub/huub.mzn
+@@ -10,3 +10,5 @@ annotation not_last;
+ 
+ /** @group huub.annotations When used on a disjunctive constraint, Huub uses the detectable precedence propagation algorithm for the constraint. */
+ annotation detectable_precedence;
++
++annotation custom_search(array[int] of var int: x);
