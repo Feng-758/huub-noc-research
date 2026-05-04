@@ -1,0 +1,10 @@
+[package]
+name = "huub-noc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.6.1", features = ["derive"] }
+huub = { git = "https://github.com/huub-solver/huub" }
+pindakaas = "0.2.3"
+rangelist = "0.4.0"
