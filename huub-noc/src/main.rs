@@ -75,9 +75,7 @@ fn main() {
 			//   );
 
 			for v in 0..game.num_vertices() {
-				let outs: Vec<usize> = (0..game.num_edges())
-					.filter(|&e| game.sources[e] == v)
-					.collect();
+				let outs = &game.outs[v];
 				if outs.len() > 0 {
 					if game.owners[v] == game.player_sat() {
 						// Structural 1:
@@ -87,7 +85,7 @@ fn main() {
 							.post();
 					} else {
 						// Structural 2:
-						for &e in &outs {
+						for &e in outs {
 							prb.proposition(BoolFormula::Implies(
 								Box::new(BoolFormula::Atom(vertices[v])),
 								Box::new(BoolFormula::Atom(edges[e])),
@@ -115,8 +113,7 @@ fn main() {
 			}
 
 			// % ------------------ NOC propagator call ------------------
-			// constraint noc(V, E, owners, priors, sources0, targets0, weights,
-			// init0, reward);
+			// constraint noc(V, E, owners, priors, sources0, targets0, weights, init0, reward);
 
 			prb.post_constraint(NoOpponentCycle {
 				vertices,
@@ -125,20 +122,13 @@ fn main() {
 			});
 		}
 		Mode::Int => {
-			// % -----------------------------
-			// % Decision
-			// % -----------------------------
-
 			// % array[VERTS] of var 0..nvertices: V;
 			// array[VERTS] of var 0..nedges: V;
 
 			let vertices = prb.new_int_decisions(game.num_vertices(), 0..=game.num_edges() as i64);
 
-			// % helper: outgoing edges of v (by scanning all edges)
-			// function set of int: outs(int: v) =
-			//   { e | e in EDGES where sources[e] == v };
-
-			// % init must be active (odd:1, even: pick some successor)
+			//  % ------------------ Structural 1 ------------------
+			//  % init must be active (odd:1, even: pick some successor)
 			// constraint
 			//   if owners[init] == player_sat then
 			//     V[init] != 0
@@ -153,6 +143,7 @@ fn main() {
 				vertices[game.init].fix(&mut prb, 1, []).unwrap();
 			}
 
+			// % ------------------ Structural 2 ------------------
 			// % odd nodes domain restriction
 			// constraint forall(v in VERTS where owners[v] != player_sat)(
 			//   V[v] <= 1
@@ -164,42 +155,50 @@ fn main() {
 				}
 			}
 
+			// % ------------------ Structural 3 ------------------
+			// % even nodes domain restriction
 			// constraint forall(v in VERTS where owners[v] == player_sat) (
 			//   V[v] in outs(v) union {0}
 			// );
 
 			for v in 0..game.num_vertices() {
 				if game.owners[v] == game.player_sat() {
-					let outs = (0..game.num_edges()).filter(|&e| game.sources[e] == v);
-					let domain: RangeList<i64> =
-						outs.chain([0]).map(|v| v as i64..=v as i64).collect();
+					let outs = &game.outs[v];
+					let domain: RangeList<i64> = outs
+						.iter()
+						.copied()
+						.map(|e| (e as i64 + 1)..=(e as i64 + 1))
+						.chain(std::iter::once(0..=0))
+						.collect();
 					vertices[v].restrict_domain(&mut prb, &domain, []).unwrap();
 				}
 			}
 
+			// % ------------------ Structural 4 ------------------
 			// constraint forall(v in VERTS where owners[v] == player_sat) (
 			//   forall(e in outs(v)) (
 			//     V[v] = e -> V[targets[e]] != 0
 			//   )
 			// );
+			// % ------------------ Structural 5 ------------------
+			// % if an odd node is active, all successors must be active
+			// constraint forall(v in VERTS where owners[v] != player_sat) (
+			//   V[v] != 0 -> forall(e in outs(v)) (V[targets[e]] != 0)
+			// );
 			for v in 0..game.num_vertices() {
-				let outs: Vec<_> = (0..game.num_edges())
-					.filter(|&e| game.sources[e] == v)
-					.collect();
+				// Structural 4:
+				let outs = &game.outs[v];
 				if game.owners[v] == game.player_sat() {
-					for e in outs {
+					for &e in outs {
 						prb.proposition(BoolFormula::Implies(
-							Box::new(BoolFormula::Atom(vertices[v].eq(e as i64))),
+							Box::new(BoolFormula::Atom(vertices[v].eq(e as i64 + 1))),
 							Box::new(BoolFormula::Atom(vertices[game.targets[e]].ne(0))),
 						))
 						.post();
 					}
 				} else {
-					// % if an odd node is active, all successors must be active
-					// constraint forall(v in VERTS where owners[v] != player_sat) (
-					//   V[v] != 0 -> forall(e in outs(v)) (V[targets[e]] != 0)
-					// );
-					for e in outs {
+					// Structural 5:
+					for &e in outs {
 						prb.proposition(BoolFormula::Implies(
 							Box::new(BoolFormula::Atom(vertices[v].ne(0))),
 							Box::new(BoolFormula::Atom(vertices[game.targets[e]].ne(0))),
@@ -209,33 +208,31 @@ fn main() {
 				}
 			}
 
-			// % solve satisfy;
-			// solve :: custom_search(V) satisfy;
 			if cli.custom_brancher {
 				search_vars = vertices.clone()
 			}
 
 			// % ------------------------------------------------------------
-			// % Call your custom constraint (FlatZinc name must match your
-			// flatzinc.rs) constraint noc_int(V, owners, priors, sources0,
-			// targets0, weights, init0, reward);
+			// % Call custom constraint;
 			//
 			prb.post_constraint(NoOpponentCycleWithInt { vertices, game });
-
-			// output ["=====SATISFIABLE===== \n"];
 		}
 	};
 
 	// 3. Transform into huub::solver::Solver and solve problem.
-	let start_solve = Instant::now();
+	let t1 = Instant::now();
 	let config = InitConfig::default().with_int_eager_limit(cli.int_eager_limit);
 	let Ok((mut slv, map)): Result<(Solver<Cadical>, _), _> = prb.to_solver(&config) else {
-		let finish_solve = Instant::now();
+		let t2 = Instant::now();
 		println!("UNSATISFIABLE!");
 		println!("conflicts=1");
-		println!("solveTime={}", &(finish_solve - start_solve).as_secs_f64());
+		println!("initTime={}", (t2 - t1).as_secs_f64());
+		println!("solveTime=0");
+		println!("totalTime={}", (t2 - t1).as_secs_f64());
 		return;
 	};
+
+	let t2 = Instant::now();
 
 	if cli.custom_brancher {
 		if search_vars.is_empty() {
@@ -249,23 +246,20 @@ fn main() {
 	}
 
 	let status = slv.solve(|_| {});
-	let finish_solve = Instant::now();
+	let t3 = Instant::now();
+
 	match status {
-		Status::Satisfied => {
-			println!("SATISFIED!");
-		}
-		Status::Unsatisfiable => {
-			println!("UNSATISFIABLE!");
-		}
-		Status::Unknown => {
-			println!("TIMEOUT!")
-		}
+		Status::Satisfied => println!("SATISFIED!"),
+		Status::Unsatisfiable => println!("UNSATISFIABLE!"),
+		Status::Unknown => println!("TIMEOUT!"),
 		Status::Complete => unreachable!(),
 	}
 
 	// 4. Check statistics
 	let stats = slv.solver_statistics();
-	println!("solveTime={}", &(finish_solve - start_solve).as_secs_f64());
+	println!("initTime={}", (t2 - t1).as_secs_f64());
+	println!("solveTime={}", (t3 - t2).as_secs_f64());
+	println!("totalTime={}", (t3 - t1).as_secs_f64());
 	println!("eagerLits={}", stats.eager_literals);
 	println!("lazyLits={}", stats.lazy_literals);
 	println!("conflicts={}", stats.conflicts);

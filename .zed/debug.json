@@ -1,0 +1,38 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "adapter": "CodeLLDB",
+    "label": "Debug the `huub-noc` executable",
+    "build": {
+      "label": "cargo run -p huub-noc",
+      "command": "cargo",
+      "args": ["build", "--package", "huub-noc"],
+      "env": {
+        "RUSTC_TOOLCHAIN": "/Users/clarence/.rustup/toolchains/stable-aarch64-apple-darwin",
+      },
+      "cwd": "/Users/clarence/monash/Research/Codes/huub_noc_research/huub-noc",
+      "use_new_terminal": false,
+      "allow_concurrent_runs": false,
+      "reveal": "always",
+      "reveal_target": "dock",
+      "hide": "never",
+      "tags": [],
+      "shell": "system",
+      "show_summary": false,
+      "show_command": false,
+      "save": "none",
+      "hooks": [],
+    },
+    "request": "launch",
+    "program": "/Users/clarence/monash/Research/Codes/huub_noc_research/huub-noc/target/debug/huub-noc",
+    "args": [
+      "--mode",
+      "int",
+      "/Users/clarence/monash/Research/Codes/practice/tests/_converted_dzn/pgsolver/recursiveladder(200).dzn",
+    ],
+    "sourceLanguages": ["rust"],
+  },
+]

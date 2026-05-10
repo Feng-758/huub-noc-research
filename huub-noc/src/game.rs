@@ -97,16 +97,3 @@ impl Game {
 		self.priors[v]
 	}
 }
-
-// helper for noc_int
-impl Game {
-	/// true if there is an edge v -> w
-	pub(crate) fn has_edge(&self, v: usize, w: usize) -> bool {
-		self.out_edges(v).iter().any(|&e| self.target(e) == w)
-	}
-
-	/// all successor vertices of v (duplicates unlikely, but could exist)
-	pub(crate) fn succs(&self, v: usize) -> impl Iterator<Item = usize> + '_ {
-		self.out_edges(v).iter().map(|&e| self.target(e))
-	}
-}
